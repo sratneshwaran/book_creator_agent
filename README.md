@@ -2,6 +2,18 @@
 
 Small Flask web app that streams book generation using an Agno agent backed by a vLLM/OpenAI-compatible endpoint. It produces a draft (markdown/plaintext) in the browser and lets you download RTF or HTML.
 
+## Get the code
+- Windows (PowerShell):
+	```pwsh
+	git clone https://github.com/sratneshwaran/book_creator_agent.git
+	Set-Location book_creator_agent
+	```
+- Linux/macOS (bash):
+	```bash
+	git clone https://github.com/sratneshwaran/book_creator_agent.git
+	cd book_creator_agent
+	```
+
 ## Features
 - Streams chapter-by-chapter draft text while the LLM writes.
 - Proofreads and converts the final manuscript to RTF via the model; also renders HTML for download.
@@ -15,33 +27,48 @@ Small Flask web app that streams book generation using an Agno agent backed by a
   - `MODEL_NAME` (default `gpt-oss:20b`)
 
 ## Setup (one-time)
-1) Clone and enter the project directory.
-2) Create a virtual environment (example on Windows PowerShell):
+- Windows (PowerShell):
 	```pwsh
 	python -m venv .venv
 	.\.venv\Scripts\Activate.ps1
+	pip install --upgrade pip
+	pip install -r requirements.txt
 	```
-3) Install pinned dependencies:
-	```pwsh
+- Linux/macOS (bash):
+	```bash
+	python -m venv .venv
+	source .venv/bin/activate
 	pip install --upgrade pip
 	pip install -r requirements.txt
 	```
 
 ## Configure
-Set environment variables as needed before running (PowerShell examples):
-```pwsh
-$env:VLLM_API_BASE="http://localhost:11434/v1"
-$env:VLLM_API_KEY="EMPTY"
-$env:MODEL_NAME="gpt-oss:20b"
-```
-`Config.SECRET_KEY` is generated at runtime; override by exporting `SECRET_KEY` if you prefer a fixed value.
+Set environment variables as needed before running.
+- Windows (PowerShell):
+	```pwsh
+	$env:VLLM_API_BASE="http://localhost:11434/v1"
+	$env:VLLM_API_KEY="EMPTY"
+	$env:MODEL_NAME="gpt-oss:20b"
+	```
+- Linux/macOS (bash):
+	```bash
+	export VLLM_API_BASE="http://localhost:11434/v1"
+	export VLLM_API_KEY="EMPTY"
+	export MODEL_NAME="gpt-oss:20b"
+	```
+`Config.SECRET_KEY` is generated at runtime; override by setting `SECRET_KEY` if you prefer a fixed value.
 
-Pinned versions are defined in `requirements.txt`; update them intentionally if you need newer releases.
+Pinned versions are defined in requirements.txt; update them intentionally if you need newer releases.
 
 ## Run the app
-```pwsh
-python app.py
-```
+- Windows (PowerShell):
+	```pwsh
+	python app.py
+	```
+- Linux/macOS (bash):
+	```bash
+	python app.py
+	```
 The server starts on `http://localhost:5000` with Flask debug mode enabled.
 
 ## Using the website
