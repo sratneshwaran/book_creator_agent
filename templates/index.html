@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Book Generator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Output Box Styling */
+        #output-box { 
+            width: 100%; 
+            height: 400px; 
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            background-color: #fafafa; 
+            overflow-y: auto; 
+            white-space: pre-wrap; 
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .status-bar { margin-top: 10px; font-style: italic; color: #666; height: 20px;}
+
+        .controls { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        #submit-btn { background-color: #28a745; color: white; }
+        #submit-btn:disabled { background-color: #94d3a2; cursor: not-allowed; }
+        #download-rtf-btn { background-color: #007bff; color: white; }
+        #download-rtf-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        #download-html-btn { background-color: #e83e8c; color: white; }
+        #download-html-btn:disabled { background-color: #f3c1da; cursor: not-allowed; }
+        
+        .thinking { color: #e67e22; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Agno Book Generator</h1>
+
+    <div class="form-group">
+        <label for="topic">Book Topic</label>
+        <input type="text" id="topic" placeholder="Enter topic in detail (e.g., The History of Artificial Intelligence in the 21st Century)...">
+    </div>
+
+    <div class="form-group">
+        <label for="output-box">Generation Output</label>
+        <div id="output-box">Waiting for input...</div>
+        <div id="status-text" class="status-bar"></div>
+    </div>
+
+    <div class="controls">
+        <button id="submit-btn" onclick="startGeneration()">Write Book</button>
+        <button id="download-rtf-btn" onclick="downloadBook('rtf')" disabled>Download RTF</button>
+        <button id="download-html-btn" onclick="downloadBook('html')" disabled>Download HTML</button>
+    </div>
+</div>
+
+<script>
+    async function startGeneration() {
+        const topic = document.getElementById('topic').value;
+        const outputBox = document.getElementById('output-box');
+        const statusText = document.getElementById('status-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const downloadRtfBtn = document.getElementById('download-rtf-btn');
+        const downloadHtmlBtn = document.getElementById('download-html-btn');
+
+        if (!topic) {
+            alert("Please enter a topic.");
+            return;
+        }
+
+        // Reset UI
+        outputBox.innerText = "";
+        statusText.innerText = "Initializing...";
+        submitBtn.disabled = true;
+        downloadRtfBtn.disabled = true;
+        downloadHtmlBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('topic', topic);
+
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                body: formData
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n\n');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const jsonStr = line.replace('data: ', '');
+                        try {
+                            const data = JSON.parse(jsonStr);
+                            
+                            if (data.status === 'thinking') {
+                                statusText.innerText = data.message;
+                                statusText.className = "status-bar thinking";
+                            } 
+                            else if (data.status === 'draft') {
+                                outputBox.innerText += data.content;
+                                // Auto scroll to bottom
+                                outputBox.scrollTop = outputBox.scrollHeight;
+                            }
+                            else if (data.status === 'complete') {
+                                statusText.innerText = data.message;
+                                statusText.className = "status-bar";
+                                downloadRtfBtn.disabled = false;
+                                downloadHtmlBtn.disabled = false;
+                                submitBtn.disabled = false;
+                            }
+                        } catch (e) {
+                            console.error("Error parsing stream", e);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "An error occurred.";
+            submitBtn.disabled = false;
+        }
+    }
+
+    function downloadBook(format) {
+        window.location.href = `/download/${format}`;
+    }
+</script>
+
+</body>
+</html>
